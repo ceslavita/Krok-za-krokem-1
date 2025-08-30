@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kartičky – Čeština / Ruština</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #edf7fe;
+      margin: 0;
+      padding: 20px; 
+    }
+    .starBtn {
+      background: #f9dcfa;  
+      color: black;    
+    }
+
+    h1 { margin-top: 20px; }
+
+  .card {
+  width: 90%;       /* místo pevné 400px */
+  max-width: 400px; /* aby na velkém monitoru nebyla obrovská */
+  height: 250px;
+  margin: 40px auto;
+  perspective: 1000px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+    .inner {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+
+    .card.flipped .inner { transform: rotateY(180deg); }
+
+    .side {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #333;
+      border-radius: 12px;
+      background: #ffedeb;
+      font-size: 36px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .back { transform: rotateY(180deg); }
+
+    .star {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 28px;
+      color: gold;
+      display: none;
+    }
+
+    .card.hard .star { display: block; }
+
+    .controls {
+      margin-top: 20px;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 8px 16px;
+      border: 1px solid black;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #feefff; 
+      color: black;
+      transition: none; /* žádná změna při hover */
+    }
+
+    #endDialog {
+      display: none;
+      border: 2px solid #333;
+      padding: 20px;
+      margin: 20px auto;
+      width: 300px;
+      border-radius: 12px;
+      background: #f9f9f9;
+    }
+
+    #endDialog button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    #cardCounter {
+      margin-top: 10px;
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Kartičky – Čeština / Ruština</h1>
+
+<div class="card" id="card" onclick="this.classList.toggle('flipped')">
+  <div class="inner">
+    <div class="side front"></div>
+    <div class="side back"></div>
+  </div>
+  <div class="star">⭐</div>
+</div>
+
+<div id="cardCounter">1 / 5</div>
+
+<div class="controls">
+  <button onclick="prevCard()"⬅️ Předchozí</button>
+  <button onclick="nextCard()">➡️ Další</button>
+  <button onclick="toggleHard()" class="starBtn">⭐ Označit</button>
+</div>
+
+<div id="endDialog">
+  <p>Konec sady.<br>Chceš procvičovat:</p>
+  <button onclick="repeatAll()">🔁 Opakovat celou sadu</button>
+  <button onclick="repeatHard()">⭐ Jen označené</button>
+</div>
+
+<script>
+  let slovicka = [
+    { cz: "dům", ru: "дом", hard: false },
+    { cz: "škola", ru: "школа", hard: false },
+    { cz: "kniha", ru: "книга", hard: false },
+    { cz: "pes", ru: "собака", hard: false },
+    { cz: "mléko", ru: "молоко", hard: false }
+  ];
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+  shuffle(slovicka);
+
+  let index = 0;
+  const front = document.querySelector(".front");
+  const back = document.querySelector(".back");
+  const card = document.getElementById("card");
+  const counter = document.getElementById("cardCounter");
+
+  function updateCounter() {
+    counter.textContent = (index + 1) + " / " + slovicka.length;
+  }
+
+  function showCard(i) {
+    front.textContent = slovicka[i].cz;
+    back.textContent = slovicka[i].ru;
+    card.classList.remove("flipped");
+
+    if (slovicka[i].hard) card.classList.add("hard");
+    else card.classList.remove("hard");
+
+    updateCounter();
+  }
+
+  function toggleHard() {
+    slovicka[index].hard = !slovicka[index].hard;
+    if (slovicka[index].hard) card.classList.add("hard");
+    else card.classList.remove("hard");
+  }
+
+  function nextCard() {
+    index++;
+    if (index >= slovicka.length) {
+      document.getElementById("endDialog").style.display = "block";
+      index = slovicka.length - 1;
+    } else {
+      showCard(index);
+    }
+  }
+
+  function prevCard() {
+    index = (index - 1 + slovicka.length) % slovicka.length;
+    showCard(index);
+  }
+
+  function repeatAll() {
+    shuffle(slovicka);
+    index = 0;
+    document.getElementById("endDialog").style.display = "none";
+    showCard(index);
+  }
+
+  function repeatHard() {
+    const hardOnes = slovicka.filter(s => s.hard);
+    if (hardOnes.length > 0) {
+      slovicka = hardOnes;
+      shuffle(slovicka);
+      index = 0;
+      document.getElementById("endDialog").style.display = "none";
+      showCard(index);
+    } else {
+      alert("Nemáš označené žádné kartičky!");
+    }
+  }
+
+  document.body.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") nextCard();
+    if (e.key === "ArrowLeft") prevCard();
+    if (e.key === " ") card.classList.toggle("flipped");
+  });
+
+  showCard(index);
+</script>
+
+</body>
+</html>
